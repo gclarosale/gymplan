@@ -1608,7 +1608,7 @@ function generateOneSession(sessId, week) {
   var context = ctxLines.join('\n');
   var phase = phases[week] || '';
 
-  var prompt = 'Genera SOLO la sesion '+sessId+' ('+sessNames[sessId]+') para la SEMANA '+week+' de un plan de fuerza+composicion.\n\nDATOS:\n'+context+'\n\nFASE '+week+': '+phase+'\n\nIMPORTANTE: Varia los ejercicios accesorios respecto a semanas anteriores. Usa tecnicas de intensificacion variadas. Sé creativo pero funcional.\n\nResponde SOLO con JSON (sin texto ni markdown):\n{"focus":"frase breve de la sesion","alert":"indicacion para el atleta","alertType":"green|blue|orange|red","ex":[{"id":"'+sessId+'1_'+week+'","nm":"Ejercicio","s":4,"hw":1,"wl":"kg","tags":["PR"],"pr":"4x8","nt":"nota tecnica breve","load":"carga sugerida"}]}\n\nMaximo 10 ejercicios. Campos obligatorios: id, nm, s, hw, wl, tags, pr, nt, load. s=0 si es calentamiento/movilidad/sin series contadas, hw=0 si no usa peso externo.';
+  var prompt = 'Genera la sesion '+sessId+' ('+sessNames[sessId]+') para SEMANA '+week+' de un plan de fuerza+composicion.\n\nDATOS ATLETA:\n'+context+'\n\nFASE '+week+': '+phase+'\n\nREGLAS: Varia ejercicios accesorios vs semanas previas. Sin sentadilla bilateral. Prensa max 90 grados. Max 9 ejercicios. Notas y cargas muy breves (max 60 caracteres cada campo).\n\nResponde UNICAMENTE con este JSON (cero texto fuera del JSON):\n{"focus":"frase breve","alert":"indicacion breve","alertType":"green","ex":[{"id":"'+sessId+'1_'+week+'","nm":"Nombre ejercicio","s":4,"hw":1,"wl":"kg","tags":["PR"],"pr":"4x8","nt":"nota breve","load":"70 kg"}]}';
 
   var controller = new AbortController();
   var timeout = setTimeout(function(){ controller.abort(); }, 40000);
@@ -1624,7 +1624,7 @@ function generateOneSession(sessId, week) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: 2500,
       messages: [{ role: 'user', content: prompt }]
     })
   })
@@ -1640,19 +1640,48 @@ function generateOneSession(sessId, week) {
   .then(function(data) {
     document.getElementById('ai-status').style.display = 'none';
     var text = (data.content||[]).map(function(b){return b.type==='text'?b.text:'';}).join('');
-    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    // Strip markdown fences
+    text = text.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+    // Extract JSON object boundaries
     var s = text.indexOf('{'), e2 = text.lastIndexOf('}');
-    if (s!==-1 && e2!==-1) text = text.slice(s,e2+1);
+    if (s === -1) { showAIError('Respuesta no contiene JSON. Intentalo de nuevo.'); return; }
+    if (e2 === -1 || e2 <= s) {
+      // JSON truncado — intentar reparar cerrando arrays y objetos abiertos
+      text = text.slice(s);
+      var opens = (text.match(/\{/g)||[]).length - (text.match(/\}/g)||[]).length;
+      var aOpens = (text.match(/\[/g)||[]).length - (text.match(/\]/g)||[]).length;
+      // Remove trailing comma before closing
+      text = text.replace(/,\s*$/, '');
+      // Close open arrays first, then objects
+      for (var ai = 0; ai < aOpens; ai++) text += ']';
+      for (var oi = 0; oi < opens; oi++) text += '}';
+    } else {
+      text = text.slice(s, e2+1);
+    }
     try {
       var sess = JSON.parse(text);
       if (!sess.ex || !sess.ex.length) throw new Error('Sin ejercicios en la respuesta');
+      // Sanitize: ensure required fields exist in each exercise
+      sess.ex = sess.ex.filter(function(ex){ return ex && ex.nm; }).map(function(ex, i) {
+        return {
+          id: ex.id || (sessId+(i+1)+'_'+week),
+          nm: ex.nm || 'Ejercicio '+(i+1),
+          s: ex.s !== undefined ? ex.s : 3,
+          hw: ex.hw !== undefined ? ex.hw : 1,
+          wl: ex.wl || 'kg',
+          tags: ex.tags || [],
+          pr: ex.pr || '3x8',
+          nt: ex.nt || '',
+          load: ex.load || ''
+        };
+      });
       var custom = getCustomWeek(week) || {};
       custom[sessId] = sess;
       saveCustomWeek(week, custom);
       document.getElementById('ai-result-msg').innerHTML = '<strong style="color:var(--gr)">&#10003; Sesion '+sessId+' semana '+week+' generada</strong><br><span style="font-size:12px;color:var(--mu)">'+sess.focus+'</span>';
       document.getElementById('ai-result').style.display = 'block';
       showToast('Sesion '+sessId+' lista', true);
-      setAIWeek(week); // refresh buttons
+      setAIWeek(week);
     } catch(e3) {
       showAIError('Error parseando respuesta: '+e3.message+'. Intentalo de nuevo.');
     }
