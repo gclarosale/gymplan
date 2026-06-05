@@ -12,8 +12,8 @@
 <style>
 :root{--bk:#0a0a0a;--dk:#111318;--card:#181c23;--bd:#252a35;--ac:#e8ff47;--ac2:#ff6b35;--ac3:#4fc3f7;--tx:#e8eaf0;--mu:#7a8099;--rd:#ff5252;--gr:#44ff88;--pur:#c084fc;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--bk);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;height:100%;overscroll-behavior:none}
-body{padding-top:var(--st);padding-bottom:calc(58px + var(--sb));overflow-x:hidden;-webkit-font-smoothing:antialiased}
+html{-webkit-overflow-scrolling:touch}
+body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;overscroll-behavior-y:contain;padding-top:var(--st);padding-bottom:calc(72px + var(--sb));overflow-x:hidden;-webkit-font-smoothing:antialiased;word-break:break-word;overflow-wrap:break-word}
 .hidden{display:none!important}
 .tab{display:none;animation:fadeUp .2s ease}
 .tab.active{display:block}
@@ -107,10 +107,10 @@ body{padding-top:var(--st);padding-bottom:calc(58px + var(--sb));overflow-x:hidd
 .chart-bar.today{background:var(--ac)}
 .chart-lbl{font-size:9px;font-family:'DM Mono',monospace;color:var(--mu)}
 /* FULL SCREEN MODAL */
-.modal{position:fixed;inset:0;z-index:500;background:var(--bk);overflow-y:auto;padding-bottom:90px;display:none}
+.modal{position:fixed;inset:0;z-index:500;background:var(--bk);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(100px + var(--sb));display:none}
 .modal.open{display:block;animation:fadeUp .2s ease}
 .modal-hdr{background:var(--dk);border-bottom:1px solid var(--bd);padding:11px 14px;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px}
-.modal-back{background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--tx);width:40px;height:40px;border-radius:8px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-back{background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--tx);width:40px;height:40px;min-width:40px;border-radius:8px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .modal-body{padding:10px 14px}
 /* EXERCISE CARD */
 .ex-card{background:var(--card);border-radius:10px;margin-bottom:9px;overflow:hidden}
@@ -125,14 +125,14 @@ body{padding-top:var(--st);padding-bottom:calc(58px + var(--sb));overflow-x:hidd
 .note-btn{background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--mu);font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;border-radius:6px;cursor:pointer;flex-shrink:0}
 .note-btn.has-note{background:rgba(232,255,71,.1);border-color:rgba(232,255,71,.3);color:var(--ac)}
 /* SETS GRID */
-.sets-sec{padding:0 12px 11px}
-.sets-hdr{display:grid;grid-template-columns:22px 1fr 1fr 32px;gap:4px;margin-bottom:3px}
+.sets-sec{padding:0 12px 11px;overflow-x:hidden}
+.sets-hdr{display:grid;grid-template-columns:20px 1fr 1fr 32px;gap:3px;margin-bottom:3px}
 .sets-hdr span{font-size:9px;font-family:'DM Mono',monospace;color:var(--mu);text-align:center;text-transform:uppercase}
-.set-row{display:grid;grid-template-columns:22px 1fr 1fr 32px;gap:4px;margin-bottom:4px;align-items:center}
+.set-row{display:grid;grid-template-columns:20px 1fr 1fr 32px;gap:3px;margin-bottom:4px;align-items:center}
 .set-n{font-size:10px;font-family:'DM Mono',monospace;color:var(--mu);text-align:center}
-.set-inp{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--tx);font-family:'DM Mono',monospace;font-size:14px;padding:7px 3px;border-radius:6px;text-align:center;width:100%;-webkit-appearance:none}
+.set-inp{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--tx);font-family:'DM Mono',monospace;font-size:13px;padding:7px 2px;border-radius:6px;text-align:center;width:100%;-webkit-appearance:none;min-width:0}
 .set-inp:focus{outline:none;border-color:rgba(232,255,71,.4);background:rgba(232,255,71,.04)}
-.set-chk{width:32px;height:32px;border-radius:6px;border:1.5px solid var(--bd);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:all .15s;flex-shrink:0}
+.set-chk{width:32px;height:32px;min-width:32px;border-radius:6px;border:1.5px solid var(--bd);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:all .15s;flex-shrink:0}
 .set-chk.done{background:var(--gr);border-color:var(--gr);color:var(--bk)}
 .sets-side-lbl{font-size:10px;font-family:'DM Mono',monospace;color:var(--ac3);letter-spacing:1px;padding:3px 0 5px;text-transform:uppercase}
 /* PAIN PILLS */
@@ -233,6 +233,52 @@ body{padding-top:var(--st);padding-bottom:calc(58px + var(--sb));overflow-x:hidd
   </div>
 </div>
 
+<!-- AI MODAL -->
+<div id="ai-modal" class="modal" style="z-index:550">
+  <div class="modal-hdr">
+    <button class="modal-back" onclick="closeAIModal()">&#8249;</button>
+    <div style="flex:1">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--pur);letter-spacing:2px;text-transform:uppercase">Claude AI</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">PROGRAMACION INTELIGENTE</div>
+    </div>
+  </div>
+  <div style="padding:14px">
+    <div class="alert alert-blue" style="margin-bottom:14px">
+      <strong>Como funciona</strong>
+      Claude analiza tus sesiones, pesos, notas y dolor registrados, y genera el plan de la siguiente semana adaptado a tu progreso real. Necesitas tu API key de Anthropic (gratuita con credito inicial en console.anthropic.com).
+    </div>
+    <div id="ai-apikey-section">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Tu API Key de Anthropic</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <input type="password" id="ai-apikey-input" placeholder="sk-ant-..." class="inp" style="flex:1;font-size:12px;padding:9px 10px;text-align:left">
+        <button onclick="saveApiKey()" class="btn btn-ac" style="flex-shrink:0;padding:10px 14px">Guardar</button>
+      </div>
+      <div style="font-size:11px;color:var(--mu);margin-bottom:14px">La key se guarda solo en tu navegador. Nunca sale del dispositivo excepto para llamar a la API.</div>
+    </div>
+    <div id="ai-week-select" style="margin-bottom:14px">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Generar plan para semana</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="generateAIPlan(2)" class="btn btn-ghost" style="flex:1" id="ai-btn-w2">Semana 2</button>
+        <button onclick="generateAIPlan(3)" class="btn btn-ghost" style="flex:1" id="ai-btn-w3">Semana 3</button>
+        <button onclick="generateAIPlan(4)" class="btn btn-ghost" style="flex:1" id="ai-btn-w4">Semana 4</button>
+      </div>
+    </div>
+    <div id="ai-status" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:24px;margin-bottom:8px">&#129302;</div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--pur)" id="ai-status-text">Analizando tus datos...</div>
+    </div>
+    <div id="ai-result" style="display:none">
+      <div class="alert alert-green" style="margin-bottom:10px" id="ai-result-msg"></div>
+      <button onclick="closeAIModal()" class="btn btn-ac btn-w100">Cerrar y ver plan</button>
+    </div>
+    <div id="ai-error" style="display:none" class="alert alert-red" style="margin-bottom:10px"></div>
+    <div style="border-top:1px solid var(--bd);padding-top:14px;margin-top:4px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Exportar mis datos (backup)</div>
+      <button onclick="exportData()" class="btn btn-ghost btn-w100">Descargar JSON de seguridad</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
@@ -251,11 +297,14 @@ body{padding-top:var(--st);padding-bottom:calc(58px + var(--sb));overflow-x:hidd
 // =====================================================
 // CONSTANTS
 // =====================================================
+var APP_VERSION = '2.1';
 var PLAN_START = new Date(2026,5,1); // June 1
 var PLAN_END   = new Date(2026,6,5); // July 5 (5 weeks buffer)
 var NUT_T = {kcal:2400,prot:195,carbs:250,fat:67};
 var DE = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
 var ME = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var AI_KEY_LS = 'gymplan_apikey';
+var AI_CUSTOM_WEEKS_LS = 'gymplan_custom_weeks';
 
 // =====================================================
 // PLAN DATA - 4 weeks x 5 sessions
@@ -672,8 +721,10 @@ function renderHoy() {
   var html = '<div class="hero" style="flex-direction:column;align-items:flex-start">';
   html += '<div style="display:flex;gap:8px;align-items:center;width:100%">';
   html += '<div><strong style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--ac)">'+dateStr+'</strong>';
-  html += '<div style="font-size:11px;color:var(--mu);font-family:\'DM Mono\',monospace">SEMANA '+w+' DE 4 · '+prog+'/5 SESIONES</div></div>';
-  html += '<div style="margin-left:auto"><div class="streak">'+prog+'&#128293; esta semana</div></div>';
+  html += '<div style="font-size:11px;color:var(--mu);font-family:\'DM Mono\',monospace">SEM '+w+'/4 · '+prog+'/5 · <span style="color:rgba(232,255,71,.35)">v'+APP_VERSION+'</span></div></div>';
+  html += '<div style="margin-left:auto;display:flex;gap:6px;align-items:center">';
+  html += '<div class="streak">'+prog+'&#128293;</div>';
+  html += '<button onclick="showAIModal()" style="background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);color:var(--pur);font-size:11px;font-family:\'DM Mono\',monospace;padding:5px 9px;border-radius:20px;cursor:pointer">&#129302; IA</button>';
   html += '</div>';
   html += '<div style="width:100%;background:var(--bd);border-radius:4px;height:5px;margin-top:8px;overflow:hidden">';
   html += '<div style="height:100%;width:'+(prog/5*100)+'%;background:linear-gradient(90deg,var(--ac2),var(--ac));border-radius:4px;transition:width .5s"></div></div>';
@@ -690,7 +741,7 @@ function renderHoy() {
     var k = getSessionKey(w, s);
     var done = state.sessions[k] && state.sessions[k].completed;
     var sType = SESSION_TYPES[s];
-    var plan = PLANS[s][w-1];
+    var plan = getWeekPlan(s, w);
     html += '<button class="today-sess-btn'+(done?' done':'')+'" onclick="openSession(\''+s+'\','+w+')">';
     html += '<span class="today-sess-icon">'+sType.icon+'</span>';
     html += '<div class="today-sess-info">';
@@ -909,7 +960,7 @@ function renderPlan() {
     var k = getSessionKey(planDisplayWeek, s);
     var done = state.sessions[k] && state.sessions[k].completed;
     var sType = SESSION_TYPES[s];
-    var plan = PLANS[s][planDisplayWeek-1];
+    var plan = getWeekPlan(s, planDisplayWeek);
     var typeColors = {power:'var(--pur)',strength:'var(--ac2)',hiit:'var(--rd)',cardio:'var(--ac3)'};
     var tc = typeColors[sType.type] || 'var(--ac2)';
 
@@ -1187,7 +1238,7 @@ function closePRModal() {
 // SESSION MODAL
 // =====================================================
 function openSession(sessId, week) {
-  var plan = PLANS[sessId][week-1];
+  var plan = getWeekPlan(sessId, week);
   var sType = SESSION_TYPES[sessId];
   var k = getSessionKey(week, sessId);
   var saved = state.sessions[k] || {};
@@ -1342,7 +1393,7 @@ function collectSessionInputs() {
   var parts = k.split('-');
   var week = parseInt(parts[0].replace('W',''));
   var sessId = parts[1];
-  plan = PLANS[sessId][week-1];
+  plan = getWeekPlan(sessId, week);
 
   plan.ex.forEach(function(ex) {
     if (ex.s > 0) {
@@ -1445,6 +1496,250 @@ function saveNote() {
 function closeNoteModal() {
   document.getElementById('note-modal').classList.remove('open');
   editingNoteExId = null;
+}
+
+// =====================================================
+// AI PLAN GENERATION
+// =====================================================
+function showAIModal() {
+  var key = localStorage.getItem(AI_KEY_LS) || '';
+  document.getElementById('ai-apikey-input').value = key ? '••••••••••••••••' : '';
+  document.getElementById('ai-status').style.display = 'none';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-error').style.display = 'none';
+  // Highlight current+next week buttons
+  var cw = state.currentWeek;
+  [2,3,4].forEach(function(w) {
+    var btn = document.getElementById('ai-btn-w'+w);
+    if (!btn) return;
+    var isNext = w === cw+1;
+    var hasCustom = !!(getCustomWeek(w));
+    btn.className = 'btn ' + (isNext ? 'btn-ac' : hasCustom ? 'btn-gr' : 'btn-ghost');
+    btn.textContent = 'Semana ' + w + (hasCustom ? ' ✓' : isNext ? ' ← próxima' : '');
+  });
+  document.getElementById('ai-modal').classList.add('open');
+  document.getElementById('ai-modal').scrollTop = 0;
+}
+
+function closeAIModal() {
+  document.getElementById('ai-modal').classList.remove('open');
+  renderTab(currentTab);
+}
+
+function saveApiKey() {
+  var val = document.getElementById('ai-apikey-input').value.trim();
+  if (!val || val.startsWith('•')) { showToast('Introduce tu API key real'); return; }
+  localStorage.setItem(AI_KEY_LS, val);
+  showToast('API key guardada', true);
+  document.getElementById('ai-apikey-input').value = '••••••••••••••••';
+}
+
+function getCustomWeek(week) {
+  try {
+    var raw = localStorage.getItem(AI_CUSTOM_WEEKS_LS);
+    if (!raw) return null;
+    var all = JSON.parse(raw);
+    return all['week'+week] || null;
+  } catch(e) { return null; }
+}
+
+function saveCustomWeek(week, planData) {
+  try {
+    var raw = localStorage.getItem(AI_CUSTOM_WEEKS_LS);
+    var all = raw ? JSON.parse(raw) : {};
+    all['week'+week] = planData;
+    localStorage.setItem(AI_CUSTOM_WEEKS_LS, JSON.stringify(all));
+  } catch(e) {}
+}
+
+function buildAIContext(targetWeek) {
+  var ctx = [];
+  ctx.push('=== PERFIL DEL ATLETA ===');
+  ctx.push('Hombre, 53 años. Exjugador rugby 3a division española (rendimiento alto amateur).');
+  ctx.push('Lesiones: Condropatia grado IV + menisco externo ausente rodilla derecha. Hernia L4-L5-S1.');
+  ctx.push('Peso actual: ' + (state.weights.length ? state.weights[state.weights.length-1].v : 'desconocido') + ' kg. Objetivo: bajar de 90 kg y mejorar composicion corporal.');
+  ctx.push('Gym completo: prensa horizontal, maquina hip thrust load plates, Bulgarian maquina unilateral, leg extension unilateral, NO hay hack squat (sustituir por prensa inclinada).');
+  ctx.push('');
+
+  ctx.push('=== RESTRICCIONES ABSOLUTAS ===');
+  ctx.push('- Sin sentadilla bilateral con barra ni variantes de alto impacto en rodilla');
+  ctx.push('- Prensa: rango maximo 90 grados, pies altos');
+  ctx.push('- Si se menciona dolor de rodilla > 4/10: reducir carga, rango o sustituir ejercicio');
+  ctx.push('- Para L4-L5: evitar flexion lumbar cargada en remo (si hay irradiacion, usar maquina)');
+  ctx.push('- Hielo en rodilla SIEMPRE tras sesion C (piernas)');
+  ctx.push('');
+
+  ctx.push('=== SESIONES COMPLETADAS (semanas anteriores) ===');
+  var hasSessions = false;
+  for (var w = 1; w < targetWeek; w++) {
+    ['A','B','C','D','E'].forEach(function(s) {
+      var k = getSessionKey(w, s);
+      var sess = state.sessions[k];
+      if (!sess) return;
+      hasSessions = true;
+      var sType = SESSION_TYPES[s];
+      ctx.push('Sem '+w+' · '+sType.name+':');
+      if (sess.pain !== null && sess.pain !== undefined) ctx.push('  Dolor rodilla: '+sess.pain+'/10');
+      if (sess.notes) ctx.push('  Notas: '+sess.notes);
+      // Extract top weights
+      var weights_done = [];
+      if (sess.sets) {
+        Object.entries(sess.sets).forEach(function(e) {
+          var key2 = e[0], val = e[1];
+          if ((key2.endsWith('_w1') || key2.endsWith('_w2') || key2.endsWith('_w3')) && val && parseFloat(val) > 0) {
+            var exId = key2.replace(/_w\d$/,'');
+            var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex; }); });
+            var exDef = allEx.find(function(e){ return e.id === exId; });
+            if (exDef) weights_done.push(exDef.nm.slice(0,20)+': '+val+'kg');
+          }
+        });
+      }
+      if (weights_done.length) ctx.push('  Cargas: '+weights_done.slice(0,6).join(', '));
+    });
+  }
+  if (!hasSessions) ctx.push('No hay sesiones registradas aun. Usa los valores sugeridos como base.');
+  ctx.push('');
+
+  ctx.push('=== RECORDS ACTUALES ===');
+  PR_DEFS.forEach(function(p) {
+    var sv = state.prs[p.id] || {};
+    var cv = sv.value !== undefined ? sv.value : p.cu;
+    if (cv !== null) ctx.push(p.nm+' ('+p.rp+'): '+cv+' '+p.un);
+  });
+  ctx.push('');
+
+  ctx.push('=== MODIFICACIONES REGISTRADAS EN GYM ===');
+  var mods = Object.entries(state.exNotes || {}).filter(function(e){ return e[1]; });
+  if (mods.length) {
+    mods.forEach(function(e) {
+      var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex; }); });
+      var exDef = allEx.find(function(ex){ return ex.id === e[0]; });
+      ctx.push((exDef ? exDef.nm : e[0])+': '+e[1]);
+    });
+  } else {
+    ctx.push('Sin modificaciones registradas.');
+  }
+  ctx.push('');
+
+  ctx.push('=== PROGRESION ESPERADA SEMANA '+targetWeek+' ===');
+  var phases = {
+    2: 'VOLUMEN: aumentar series/volumen. Introducir supersets en accesorios. Subir cargas 2.5-5% en fundamentales.',
+    3: 'INTENSIDAD: 5x5 o similar en ejercicios principales. Aproximacion a PR. Reducir reps, aumentar peso.',
+    4: 'PEAK: test de PRs en todos los fundamentales. Volumen reducido, intensidad maxima. Deload accesorio.'
+  };
+  ctx.push(phases[targetWeek] || 'Mantener progresion logica.');
+
+  return ctx.join('\n');
+}
+
+function generateAIPlan(targetWeek) {
+  var apiKey = localStorage.getItem(AI_KEY_LS);
+  if (!apiKey) {
+    showToast('Primero guarda tu API key'); return;
+  }
+
+  document.getElementById('ai-status').style.display = 'block';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-error').style.display = 'none';
+  document.getElementById('ai-status-text').textContent = 'Analizando tus datos de entrenamiento...';
+
+  var context = buildAIContext(targetWeek);
+
+  var systemPrompt = 'Eres un entrenador experto en fuerza y acondicionamiento fisico con especializacion en lesiones articulares (condropatia, sin menisco, hernia lumbar). Generas planes de entrenamiento semanales variados, progresivos y adaptados a las condiciones del atleta. Respondes UNICAMENTE con JSON valido, sin texto adicional, sin markdown, sin explicaciones.';
+
+  var userPrompt = context + '\n\n=== INSTRUCCION ===\nGenera el plan completo de la SEMANA ' + targetWeek + ' para las 5 sesiones (A, B, C, D, E).\n\nSesiones:\n- A: Empuje + Potencia (pecho, hombro, cuadriceps). Incluir Push Press explosivo al inicio.\n- B: Traccion + Potencia (espalda, biceps). Incluir elemento explosivo al inicio.\n- C: Piernas + Gluteo (rodilla adaptada). Siempre terminar con hielo. Sin sentadilla bilateral.\n- D: HIIT + Core metabolico (circuitos, air bike, core). Alta intensidad.\n- E: Cardio Z2 + Movilidad (baja intensidad, movilidad articular).\n\nIMPORTANTE: Varia los ejercicios respecto a semanas anteriores. Usa ejercicios diferentes en accesorios, distintos esquemas de series/reps, diferentes tecnicas de intensificacion (supersets, drop sets, pause reps, EMOM, etc.).\n\nRespuesta EXCLUSIVAMENTE en este formato JSON (sin nada antes ni despues):\n{"A":{"focus":"...","alert":"...","alertType":"green|blue|orange|red","ex":[{"id":"A1_' + targetWeek + '","nm":"nombre","s":4,"hw":1,"wl":"kg","tags":["PR"],"pr":"4x8","nt":"nota coaching","load":"carga sugerida"}]},"B":{...},"C":{...},"D":{...},"E":{...}}\n\nCampos obligatorios en cada ejercicio: id (unico, formato Xs_W donde X=letra sesion, s=numero, W=semana), nm, s (0 si es sin series contadas), hw (1 si tiene peso, 0 si no), wl (unidad de peso o vacio), tags (array con PR/POT/HIIT/CORE/KNEE segun aplique), pr (prescripcion), nt (nota), load (carga sugerida basada en historial).';
+
+  var statusEl = document.getElementById('ai-status-text');
+  setTimeout(function(){ statusEl.textContent = 'Generando plan personalizado... (10-20 segundos)'; }, 2000);
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-6',
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    document.getElementById('ai-status').style.display = 'none';
+    if (data.error) {
+      var errEl = document.getElementById('ai-error');
+      errEl.style.display = 'block';
+      errEl.textContent = 'Error API: ' + (data.error.message || JSON.stringify(data.error));
+      return;
+    }
+    var text = (data.content || []).map(function(b){ return b.type==='text'?b.text:''; }).join('');
+    // Clean potential markdown
+    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    try {
+      var plan = JSON.parse(text);
+      // Validate structure
+      if (!plan.A || !plan.B || !plan.C || !plan.D || !plan.E) throw new Error('Estructura incompleta');
+      // Save as custom week
+      saveCustomWeek(targetWeek, plan);
+      var resultEl = document.getElementById('ai-result');
+      var resultMsg = document.getElementById('ai-result-msg');
+      resultMsg.innerHTML = '<strong style="color:var(--gr)">Plan generado!</strong> La semana '+targetWeek+' ya esta disponible en el Plan con ejercicios personalizados a tu historial.';
+      resultEl.style.display = 'block';
+      showToast('Semana '+targetWeek+' generada por IA', true);
+    } catch(e) {
+      var errEl2 = document.getElementById('ai-error');
+      errEl2.style.display = 'block';
+      errEl2.textContent = 'Error al parsear respuesta. Intenta de nuevo. ('+e.message+')';
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('ai-status').style.display = 'none';
+    var errEl3 = document.getElementById('ai-error');
+    errEl3.style.display = 'block';
+    errEl3.textContent = 'Error de conexion: '+err.message+'. Comprueba tu API key y conexion a internet.';
+  });
+}
+
+function getWeekPlan(sessId, week) {
+  // Check for AI-generated custom week first
+  var custom = getCustomWeek(week);
+  if (custom && custom[sessId]) {
+    var sess = custom[sessId];
+    return {
+      week: week,
+      focus: sess.focus || 'Plan generado por IA',
+      alert: sess.alert || 'Sesion generada y adaptada a tu historial por Claude AI.',
+      alertType: sess.alertType || 'blue',
+      ex: sess.ex || []
+    };
+  }
+  // Fall back to hardcoded plan
+  var plans = PLANS[sessId];
+  if (!plans || !plans[week-1]) return plans ? plans[0] : null;
+  return plans[week-1];
+}
+
+function exportData() {
+  var payload = {
+    version: APP_VERSION,
+    exportDate: new Date().toISOString(),
+    sessions: state.sessions,
+    prs: state.prs,
+    weights: state.weights,
+    nutrition: state.nutrition,
+    exNotes: state.exNotes
+  };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'gymplan_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup descargado', true);
 }
 
 // =====================================================
