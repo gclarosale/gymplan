@@ -251,7 +251,8 @@ body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans
       <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Tu API Key de Anthropic</div>
       <div style="display:flex;gap:8px;margin-bottom:6px">
         <input type="password" id="ai-apikey-input" placeholder="sk-ant-..." class="inp" style="flex:1;font-size:12px;padding:9px 10px;text-align:left">
-        <button onclick="saveApiKey()" class="btn btn-ac" style="flex-shrink:0;padding:10px 14px">Guardar</button>
+        <button onclick="saveApiKey()" class="btn btn-ac" style="flex-shrink:0;padding:10px 12px">Guardar</button>
+        <button onclick="clearApiKey()" class="btn btn-ghost" style="flex-shrink:0;padding:10px 10px" title="Borrar key guardada">&#128465;</button>
       </div>
       <div style="font-size:11px;color:var(--mu);margin-bottom:14px">La key se guarda solo en tu navegador. Nunca sale del dispositivo excepto para llamar a la API.</div>
     </div>
@@ -1534,6 +1535,12 @@ function saveApiKey() {
   document.getElementById('ai-apikey-input').value = '••••••••••••••••';
 }
 
+function clearApiKey() {
+  localStorage.removeItem(AI_KEY_LS);
+  document.getElementById('ai-apikey-input').value = '';
+  showToast('Key borrada. Introduce una nueva.');
+}
+
 function getCustomWeek(week) {
   try {
     var raw = localStorage.getItem(AI_CUSTOM_WEEKS_LS);
@@ -1657,49 +1664,60 @@ function generateAIPlan(targetWeek) {
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     })
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r) {
+    if (!r.ok) {
+      return r.json().then(function(errData) {
+        throw new Error('HTTP ' + r.status + ': ' + (errData.error ? errData.error.message : JSON.stringify(errData)));
+      });
+    }
+    return r.json();
+  })
   .then(function(data) {
     document.getElementById('ai-status').style.display = 'none';
-    if (data.error) {
-      var errEl = document.getElementById('ai-error');
-      errEl.style.display = 'block';
-      errEl.textContent = 'Error API: ' + (data.error.message || JSON.stringify(data.error));
-      return;
-    }
     var text = (data.content || []).map(function(b){ return b.type==='text'?b.text:''; }).join('');
-    // Clean potential markdown
+    // Strip potential markdown fences
     text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    // Find first { to last } to be safe
+    var start = text.indexOf('{');
+    var end = text.lastIndexOf('}');
+    if (start !== -1 && end !== -1) text = text.slice(start, end+1);
     try {
       var plan = JSON.parse(text);
-      // Validate structure
-      if (!plan.A || !plan.B || !plan.C || !plan.D || !plan.E) throw new Error('Estructura incompleta');
-      // Save as custom week
+      if (!plan.A || !plan.B || !plan.C || !plan.D || !plan.E) throw new Error('Faltan sesiones en el JSON');
       saveCustomWeek(targetWeek, plan);
-      var resultEl = document.getElementById('ai-result');
-      var resultMsg = document.getElementById('ai-result-msg');
-      resultMsg.innerHTML = '<strong style="color:var(--gr)">Plan generado!</strong> La semana '+targetWeek+' ya esta disponible en el Plan con ejercicios personalizados a tu historial.';
-      resultEl.style.display = 'block';
+      document.getElementById('ai-result-msg').innerHTML = '<strong style="color:var(--gr)">&#10003; Plan semana '+targetWeek+' generado!</strong> Aparece ya en el Plan con ejercicios adaptados a tu historial.';
+      document.getElementById('ai-result').style.display = 'block';
       showToast('Semana '+targetWeek+' generada por IA', true);
     } catch(e) {
       var errEl2 = document.getElementById('ai-error');
       errEl2.style.display = 'block';
-      errEl2.textContent = 'Error al parsear respuesta. Intenta de nuevo. ('+e.message+')';
+      errEl2.textContent = 'Error al parsear JSON: ' + e.message + '. Intentalo de nuevo.';
     }
   })
   .catch(function(err) {
     document.getElementById('ai-status').style.display = 'none';
     var errEl3 = document.getElementById('ai-error');
     errEl3.style.display = 'block';
-    errEl3.textContent = 'Error de conexion: '+err.message+'. Comprueba tu API key y conexion a internet.';
+    var msg = err.message || String(err);
+    if (msg.toLowerCase().includes('cors') || msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')) {
+      errEl3.textContent = 'Error de red/CORS: ' + msg + '. Asegurate de estar en la URL de GitHub Pages (no en archivo local).';
+    } else if (msg.includes('401')) {
+      errEl3.textContent = 'API key invalida (401). Borra la key guardada e introduce una nueva correcta.';
+    } else if (msg.includes('403')) {
+      errEl3.textContent = 'Sin acceso (403). Verifica que la API key tiene credito y permisos.';
+    } else {
+      errEl3.textContent = 'Error: ' + msg;
+    }
   });
 }
 
