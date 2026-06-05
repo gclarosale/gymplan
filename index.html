@@ -238,48 +238,65 @@ body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans
   <div class="modal-hdr">
     <button class="modal-back" onclick="closeAIModal()">&#8249;</button>
     <div style="flex:1">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--pur);letter-spacing:2px;text-transform:uppercase">Claude AI</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">PROGRAMACION INTELIGENTE</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--pur);letter-spacing:2px;text-transform:uppercase">Programacion inteligente</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">GENERAR SEMANA CON IA</div>
     </div>
   </div>
   <div style="padding:14px">
-    <div class="alert alert-blue" style="margin-bottom:14px">
-      <strong>Como funciona</strong>
-      Claude analiza tus sesiones, pesos, notas y dolor registrados, y genera el plan de la siguiente semana adaptado a tu progreso real. Necesitas tu API key de Anthropic (gratuita con credito inicial en console.anthropic.com).
+    <div style="display:flex;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:14px">
+      <button onclick="setAIMode('manual')" id="mode-manual" class="btn" style="flex:1;border-radius:0;border:none;background:var(--ac);color:var(--bk);font-size:11px;padding:10px 4px;line-height:1.4">Via Claude.ai<br><span style="font-size:9px;font-weight:400;opacity:.7">Siempre funciona</span></button>
+      <button onclick="setAIMode('api')" id="mode-api" class="btn" style="flex:1;border-radius:0;border:none;background:none;color:var(--mu);font-size:11px;padding:10px 4px;line-height:1.4">Via API directa<br><span style="font-size:9px;font-weight:400">Puede fallar en iOS</span></button>
     </div>
-    <div id="ai-apikey-section">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Tu API Key de Anthropic</div>
-      <div style="display:flex;gap:8px;margin-bottom:6px">
+
+    <div id="ai-manual-mode">
+      <div class="alert alert-green" style="margin-bottom:12px"><strong>3 pasos, 2 minutos</strong> Copia el prompt con tus datos, pegalo en Claude.ai, trae la respuesta aqui.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">1. Semana y sesion</div>
+      <div style="display:flex;gap:5px;margin-bottom:7px">
+        <button onclick="setManualWeek(2)" class="btn btn-ghost" style="flex:1;padding:8px 2px;font-size:12px" id="mw2">Sem 2</button>
+        <button onclick="setManualWeek(3)" class="btn btn-ghost" style="flex:1;padding:8px 2px;font-size:12px" id="mw3">Sem 3</button>
+        <button onclick="setManualWeek(4)" class="btn btn-ghost" style="flex:1;padding:8px 2px;font-size:12px" id="mw4">Sem 4</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:12px">
+        <button onclick="setManualSess('A')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-A">A<br><span style="font-size:8px;opacity:.6">Empuje</span></button>
+        <button onclick="setManualSess('B')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-B">B<br><span style="font-size:8px;opacity:.6">Traccion</span></button>
+        <button onclick="setManualSess('C')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-C">C<br><span style="font-size:8px;opacity:.6">Piernas</span></button>
+        <button onclick="setManualSess('D')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-D">D<br><span style="font-size:8px;opacity:.6">HIIT</span></button>
+        <button onclick="setManualSess('E')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-E">E<br><span style="font-size:8px;opacity:.6">Cardio</span></button>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">2. Copia este prompt y pegalo en Claude.ai</div>
+      <textarea id="manual-prompt" readonly style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:9px 11px;border-radius:8px;resize:none;height:120px;line-height:1.5;margin-bottom:7px" placeholder="Selecciona semana y sesion..."></textarea>
+      <div style="display:flex;gap:7px;margin-bottom:14px">
+        <button onclick="copyPrompt()" class="btn btn-ac" style="flex:1" id="copy-btn">Copiar prompt</button>
+        <a href="https://claude.ai" target="_blank" class="btn btn-ghost" style="flex-shrink:0;padding:11px 12px;text-decoration:none;text-align:center;display:block">Claude.ai &#8599;</a>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">3. Pega la respuesta de Claude aqui</div>
+      <textarea id="manual-response" placeholder='Pega el JSON que te da Claude...' style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:9px 11px;border-radius:8px;resize:vertical;min-height:80px;margin-bottom:8px"></textarea>
+      <button onclick="importManualPlan()" class="btn btn-gr btn-w100" style="margin-bottom:10px">Importar plan en la app</button>
+      <div id="manual-result" style="display:none" class="alert alert-green"></div>
+      <div id="manual-error" style="display:none" class="alert alert-red"></div>
+    </div>
+
+    <div id="ai-api-mode" style="display:none">
+      <div class="alert alert-blue" style="margin-bottom:12px"><strong>Generacion automatica</strong> Requiere API key de Anthropic y puede fallar en iOS Safari.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">API Key de Anthropic</div>
+      <div style="display:flex;gap:7px;margin-bottom:12px">
         <input type="password" id="ai-apikey-input" placeholder="sk-ant-..." class="inp" style="flex:1;font-size:12px;padding:9px 10px;text-align:left">
         <button onclick="saveApiKey()" class="btn btn-ac" style="flex-shrink:0;padding:10px 12px">Guardar</button>
-        <button onclick="clearApiKey()" class="btn btn-ghost" style="flex-shrink:0;padding:10px 10px" title="Borrar key guardada">&#128465;</button>
+        <button onclick="clearApiKey()" class="btn btn-ghost" style="flex-shrink:0;padding:10px 10px">&#128465;</button>
       </div>
-      <div style="font-size:11px;color:var(--mu);margin-bottom:14px">La key se guarda solo en tu navegador. Nunca sale del dispositivo excepto para llamar a la API.</div>
-    </div>
-    <div id="ai-week-select" style="margin-bottom:14px">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Semana a generar</div>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
+      <div style="display:flex;gap:5px;margin-bottom:8px">
         <button onclick="setAIWeek(2)" class="btn btn-ghost" style="flex:1" id="ai-btn-w2">Sem 2</button>
         <button onclick="setAIWeek(3)" class="btn btn-ghost" style="flex:1" id="ai-btn-w3">Sem 3</button>
         <button onclick="setAIWeek(4)" class="btn btn-ghost" style="flex:1" id="ai-btn-w4">Sem 4</button>
       </div>
-      <div id="ai-sess-btns" style="display:none">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Generar sesion (una a la vez — mas rapido y fiable)</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="ai-sess-grid"></div>
-      </div>
+      <div id="ai-sess-btns" style="display:none"><div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sesion</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="ai-sess-grid"></div></div>
+      <div id="ai-status" style="display:none;text-align:center;padding:16px 0"><div style="font-size:22px;margin-bottom:6px">&#129302;</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--pur)" id="ai-status-text">Generando...</div></div>
+      <div id="ai-result" style="display:none"><div class="alert alert-green" id="ai-result-msg"></div><button onclick="closeAIModal()" class="btn btn-ac btn-w100" style="margin-top:8px">Cerrar y ver plan</button></div>
+      <div id="ai-error" style="display:none" class="alert alert-red"></div>
     </div>
-    <div id="ai-status" style="display:none;text-align:center;padding:20px 0">
-      <div style="font-size:24px;margin-bottom:8px">&#129302;</div>
-      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--pur)" id="ai-status-text">Analizando tus datos...</div>
-    </div>
-    <div id="ai-result" style="display:none">
-      <div class="alert alert-green" style="margin-bottom:10px" id="ai-result-msg"></div>
-      <button onclick="closeAIModal()" class="btn btn-ac btn-w100">Cerrar y ver plan</button>
-    </div>
-    <div id="ai-error" style="display:none" class="alert alert-red" style="margin-bottom:10px"></div>
-    <div style="border-top:1px solid var(--bd);padding-top:14px;margin-top:4px">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Exportar mis datos (backup)</div>
-      <button onclick="exportData()" class="btn btn-ghost btn-w100">Descargar JSON de seguridad</button>
+
+    <div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:12px">
+      <button onclick="exportData()" class="btn btn-ghost btn-w100" style="font-size:12px">&#128190; Descargar backup JSON</button>
     </div>
   </div>
 </div>
@@ -1506,21 +1523,126 @@ function closeNoteModal() {
 // =====================================================
 // AI PLAN GENERATION
 // =====================================================
+var aiCurrentMode = 'manual';
+var manualWeek = 2;
+var manualSess = 'A';
+
+function setAIMode(mode) {
+  aiCurrentMode = mode;
+  document.getElementById('ai-manual-mode').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('ai-api-mode').style.display = mode === 'api' ? 'block' : 'none';
+  document.getElementById('mode-manual').style.background = mode === 'manual' ? 'var(--ac)' : 'none';
+  document.getElementById('mode-manual').style.color = mode === 'manual' ? 'var(--bk)' : 'var(--mu)';
+  document.getElementById('mode-api').style.background = mode === 'api' ? 'var(--ac)' : 'none';
+  document.getElementById('mode-api').style.color = mode === 'api' ? 'var(--bk)' : 'var(--mu)';
+}
+
+function setManualWeek(w) {
+  manualWeek = w;
+  [2,3,4].forEach(function(ww) {
+    var btn = document.getElementById('mw'+ww);
+    if (btn) btn.className = 'btn ' + (ww===w ? 'btn-ac' : 'btn-ghost');
+  });
+  refreshManualPrompt();
+}
+
+function setManualSess(s) {
+  manualSess = s;
+  ['A','B','C','D','E'].forEach(function(ss) {
+    var btn = document.getElementById('ms-'+ss);
+    if (!btn) return;
+    var done = !!(getCustomWeek(manualWeek) && getCustomWeek(manualWeek)[ss]);
+    btn.className = 'btn ' + (ss===s ? 'btn-ac' : done ? 'btn-gr' : 'btn-ghost');
+  });
+  refreshManualPrompt();
+}
+
+function refreshManualPrompt() {
+  var ta = document.getElementById('manual-prompt');
+  if (!ta) return;
+  var sessNames = {A:'EMPUJE + POTENCIA (pecho, hombro, cuadriceps, Push Press explosivo al inicio)',B:'TRACCION + POTENCIA (espalda, biceps, remo explosivo al inicio)',C:'PIERNAS + GLUTEO (prensa, hip thrust — sin sentadilla bilateral, hielo al final)',D:'HIIT + CORE METABOLICO (air bike, circuitos anaerobicos, core)',E:'CARDIO Z2 + MOVILIDAD (45-55 min FC baja, movilidad articular)'};
+  var phases = {2:'SEMANA 2 - VOLUMEN: una serie mas, supersets en accesorios, subir cargas 2.5-5%.',3:'SEMANA 3 - INTENSIDAD: 5x5 en fundamentales, aproximacion a PR, tecnicas avanzadas.',4:'SEMANA 4 - PEAK: test de PRs, volumen reducido, intensidad maxima.'};
+  var ctx = buildAIContext(manualWeek);
+  var prompt = 'Eres un entrenador experto en fuerza con especializacion en lesiones articulares.\n\n' + ctx + '\n\n' + (phases[manualWeek]||'') + '\n\nGenera SOLO la sesion ' + manualSess + ' (' + sessNames[manualSess] + ') para la semana ' + manualWeek + '.\n\nVaria los ejercicios accesorios respecto a sesiones anteriores. Max 9 ejercicios. Notas y cargas muy breves.\n\nResponde UNICAMENTE con JSON (sin texto fuera del JSON):\n{"focus":"frase breve","alert":"indicacion","alertType":"green","ex":[{"id":"' + manualSess + '1_' + manualWeek + '","nm":"Nombre","s":4,"hw":1,"wl":"kg","tags":["PR"],"pr":"4x8","nt":"nota","load":"70 kg"}]}';
+  ta.value = prompt;
+}
+
+function copyPrompt() {
+  var ta = document.getElementById('manual-prompt');
+  if (!ta || !ta.value.trim()) { showToast('Selecciona semana y sesion primero'); return; }
+  navigator.clipboard.writeText(ta.value).then(function() {
+    document.getElementById('copy-btn').textContent = 'Copiado!';
+    setTimeout(function(){ document.getElementById('copy-btn').textContent = 'Copiar prompt'; }, 2500);
+    showToast('Prompt copiado. Pega en Claude.ai', true);
+  }).catch(function() {
+    ta.select();
+    document.execCommand('copy');
+    document.getElementById('copy-btn').textContent = 'Copiado!';
+    setTimeout(function(){ document.getElementById('copy-btn').textContent = 'Copiar prompt'; }, 2500);
+    showToast('Prompt copiado', true);
+  });
+}
+
+function importManualPlan() {
+  var raw = document.getElementById('manual-response').value.trim();
+  if (!raw) { document.getElementById('manual-error').style.display='block'; document.getElementById('manual-error').textContent='Pega la respuesta de Claude primero.'; return; }
+  document.getElementById('manual-error').style.display = 'none';
+  document.getElementById('manual-result').style.display = 'none';
+  // Extract JSON
+  raw = raw.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim();
+  var s = raw.indexOf('{'), e2 = raw.lastIndexOf('}');
+  if (s === -1 || e2 === -1) { document.getElementById('manual-error').style.display='block'; document.getElementById('manual-error').textContent='No se encontro JSON valido. Asegurate de copiar toda la respuesta de Claude.'; return; }
+  raw = raw.slice(s, e2+1);
+  try {
+    var plan = JSON.parse(raw);
+    if (!plan.ex || !Array.isArray(plan.ex) || plan.ex.length === 0) throw new Error('El JSON no tiene ejercicios (campo "ex").');
+    // Sanitize exercises
+    plan.ex = plan.ex.filter(function(ex){ return ex && ex.nm; }).map(function(ex, i) {
+      return { id: ex.id||(manualSess+(i+1)+'_'+manualWeek), nm:ex.nm, s:ex.s!==undefined?ex.s:3, hw:ex.hw!==undefined?ex.hw:1, wl:ex.wl||'kg', tags:ex.tags||[], pr:ex.pr||'3x8', nt:ex.nt||'', load:ex.load||'' };
+    });
+    var custom = getCustomWeek(manualWeek) || {};
+    custom[manualSess] = plan;
+    saveCustomWeek(manualWeek, custom);
+    document.getElementById('manual-result').style.display = 'block';
+    document.getElementById('manual-result').innerHTML = '<strong>Sesion ' + manualSess + ' semana ' + manualWeek + ' importada!</strong> ' + plan.focus;
+    document.getElementById('manual-response').value = '';
+    showToast('Sesion ' + manualSess + ' lista', true);
+    // Update session buttons
+    ['A','B','C','D','E'].forEach(function(ss) {
+      var btn = document.getElementById('ms-'+ss);
+      if (!btn) return;
+      var done = !!(getCustomWeek(manualWeek) && getCustomWeek(manualWeek)[ss]);
+      if (ss !== manualSess) btn.className = 'btn ' + (done ? 'btn-gr' : 'btn-ghost');
+    });
+    document.getElementById('ms-'+manualSess).className = 'btn btn-gr';
+  } catch(e3) {
+    document.getElementById('manual-error').style.display = 'block';
+    document.getElementById('manual-error').textContent = 'Error: ' + e3.message + '. Comprueba que copiaste toda la respuesta de Claude.';
+  }
+}
 function showAIModal() {
   var key = localStorage.getItem(AI_KEY_LS) || '';
-  document.getElementById('ai-apikey-input').value = key ? '••••••••••••••••' : '';
+  var apkInput = document.getElementById('ai-apikey-input');
+  if (apkInput) apkInput.value = key ? '••••••••••••••••' : '';
   document.getElementById('ai-status').style.display = 'none';
   document.getElementById('ai-result').style.display = 'none';
   document.getElementById('ai-error').style.display = 'none';
-  document.getElementById('ai-sess-btns').style.display = 'none';
-  // Week buttons
+  document.getElementById('manual-result').style.display = 'none';
+  document.getElementById('manual-error').style.display = 'none';
+  document.getElementById('manual-response').value = '';
+  // Default to manual mode
+  setAIMode('manual');
+  // Pre-select next week
+  var nextWeek = Math.min(4, state.currentWeek + 1);
+  setManualWeek(nextWeek);
+  setManualSess('A');
+  // Update week buttons state
   [2,3,4].forEach(function(w) {
     var btn = document.getElementById('ai-btn-w'+w);
     if (!btn) return;
     var custom = getCustomWeek(w);
     var done = custom ? Object.keys(custom).length : 0;
-    btn.className = 'btn ' + (w === state.currentWeek+1 ? 'btn-ac' : 'btn-ghost');
-    btn.textContent = 'Sem '+w + (done ? ' ('+done+'/5)' : '');
+    btn.textContent = 'Sem '+w+(done?' ('+done+'/5)':'');
   });
   document.getElementById('ai-modal').classList.add('open');
   document.getElementById('ai-modal').scrollTop = 0;
