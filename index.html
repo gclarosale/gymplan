@@ -264,6 +264,7 @@ body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans
         <button onclick="setManualSess('E')" class="btn btn-ghost" style="padding:8px 2px;font-size:11px" id="ms-E">E<br><span style="font-size:8px;opacity:.6">Cardio</span></button>
       </div>
       <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">2. Copia este prompt y pegalo en Claude.ai</div>
+      <div id="data-summary" style="display:none;background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px"></div>
       <textarea id="manual-prompt" readonly style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:9px 11px;border-radius:8px;resize:none;height:120px;line-height:1.5;margin-bottom:7px" placeholder="Selecciona semana y sesion..."></textarea>
       <div style="display:flex;gap:7px;margin-bottom:14px">
         <button onclick="copyPrompt()" class="btn btn-ac" style="flex:1" id="copy-btn">Copiar prompt</button>
@@ -319,7 +320,7 @@ body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans
 // =====================================================
 // CONSTANTS
 // =====================================================
-var APP_VERSION = '2.1';
+var APP_VERSION = '2.3';
 var PLAN_START = new Date(2026,5,1); // June 1
 var PLAN_END   = new Date(2026,6,5); // July 5 (5 weeks buffer)
 var NUT_T = {kcal:2400,prot:195,carbs:250,fat:67};
@@ -764,14 +765,24 @@ function renderHoy() {
     var done = state.sessions[k] && state.sessions[k].completed;
     var sType = SESSION_TYPES[s];
     var plan = getWeekPlan(s, w);
-    html += '<button class="today-sess-btn'+(done?' done':'')+'" onclick="openSession(\''+s+'\','+w+')">';
+    var isAI = isAISession(s, w);
+    var sessData = state.sessions[getSessionKey(w, s)];
+    var borderCol = done ? 'rgba(68,255,136,.25)' : isAI ? 'rgba(192,132,252,.25)' : 'var(--bd)';
+    html += '<button class="today-sess-btn'+(done?' done':'')+'" onclick="openSession(\''+s+'\','+w+')" style="border-color:'+borderCol+'">';
     html += '<span class="today-sess-icon">'+sType.icon+'</span>';
     html += '<div class="today-sess-info">';
-    html += '<div class="today-sess-name">'+sType.name+'</div>';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">';
+    html += '<div class="today-sess-name" style="margin-bottom:0">'+sType.name+'</div>';
+    if (isAI) html += '<span style="font-size:9px;font-family:\'DM Mono\',monospace;padding:1px 6px;border-radius:3px;background:rgba(192,132,252,.15);color:var(--pur);flex-shrink:0">&#10022; IA</span>';
+    html += '</div>';
     html += '<div class="today-sess-desc">'+plan.focus+'</div>';
-    html += '<div style="display:flex;gap:6px;margin-top:4px">';
+    html += '<div style="display:flex;gap:6px;margin-top:4px;align-items:center">';
     html += '<span class="type-badge type-'+sType.type+'">'+sType.type.toUpperCase()+'</span>';
     html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--mu)">'+sType.dur+'</span>';
+    if (done && sessData && sessData.pain !== null && sessData.pain !== undefined) {
+      var pc = sessData.pain<=3?'var(--gr)':sessData.pain<=6?'orange':'var(--rd)';
+      html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:'+pc+'">Dolor: '+sessData.pain+'/10</span>';
+    }
     html += '</div></div>';
     html += '<span style="font-size:18px;flex-shrink:0">'+(done?'&#9989;':'&#9654;')+'</span>';
     html += '</button>';
@@ -1280,13 +1291,38 @@ function openSession(sessId, week) {
   document.getElementById('sm-title').textContent = sType.name;
   var typeColors = {power:'var(--pur)',strength:'var(--ac2)',hiit:'var(--rd)',cardio:'var(--ac3)'};
   var tc = typeColors[sType.type] || 'var(--ac2)';
+  var sourceHTML = plan.source === 'ai'
+    ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(192,132,252,.15);color:var(--pur);margin-right:6px">&#10022; GENERADO POR IA</span>'
+    : '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--mu);margin-right:6px">PLAN BASE</span>';
   document.getElementById('sm-badges').innerHTML =
+    sourceHTML +
     '<span class="type-badge type-'+sType.type+'" style="margin-right:6px">'+sType.type.toUpperCase()+'</span>'+
     '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu)">'+plan.focus+'</span>';
 
-  // Build body
+  // Build body - add data context header if AI session
   var altColors = {green:'alert-green',blue:'alert-blue',orange:'alert-orange',red:'alert-red'};
   var html = '<div class="alert '+altColors[plan.alertType||'blue']+'" style="margin-bottom:10px">'+plan.alert+'</div>';
+
+  // Show previous performance if available
+  var prevData = getPrevSessionData(sessId, week);
+  if (prevData) {
+    html += '<div style="background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px">';
+    html += '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Referencia sesion anterior</div>';
+    if (prevData.pain !== null) {
+      var pc2 = prevData.pain<=3?'var(--gr)':prevData.pain<=6?'orange':'var(--rd)';
+      html += '<div style="font-size:12px;margin-bottom:4px">Dolor rodilla: <strong style="color:'+pc2+'">'+prevData.pain+'/10</strong></div>';
+    }
+    if (prevData.loads.length) {
+      html += '<div style="font-size:11px;color:var(--mu);margin-bottom:2px">Cargas anteriores:</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      prevData.loads.forEach(function(l) {
+        html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;background:rgba(255,255,255,.05);border-radius:3px;padding:2px 7px;color:var(--tx)">'+l+'</span>';
+      });
+      html += '</div>';
+    }
+    if (prevData.notes) html += '<div style="font-size:11px;color:var(--mu);margin-top:5px;font-style:italic">'+prevData.notes.slice(0,80)+'</div>';
+    html += '</div>';
+  }
 
   plan.ex.forEach(function(ex) {
     var xd = !!openSessionData.exercises[ex.id];
@@ -1543,7 +1579,15 @@ function setManualWeek(w) {
     var btn = document.getElementById('mw'+ww);
     if (btn) btn.className = 'btn ' + (ww===w ? 'btn-ac' : 'btn-ghost');
   });
+  // Refresh session button states for new week
+  ['A','B','C','D','E'].forEach(function(ss) {
+    var btn = document.getElementById('ms-'+ss);
+    if (!btn) return;
+    var done = !!(getCustomWeek(w) && getCustomWeek(w)[ss]);
+    btn.className = 'btn ' + (ss===manualSess ? 'btn-ac' : done ? 'btn-gr' : 'btn-ghost');
+  });
   refreshManualPrompt();
+  showDataSummary(manualSess, w);
 }
 
 function setManualSess(s) {
@@ -1555,6 +1599,69 @@ function setManualSess(s) {
     btn.className = 'btn ' + (ss===s ? 'btn-ac' : done ? 'btn-gr' : 'btn-ghost');
   });
   refreshManualPrompt();
+  // Show data summary
+  showDataSummary(s, manualWeek);
+}
+
+function showDataSummary(sessId, week) {
+  var summaryEl = document.getElementById('data-summary');
+  if (!summaryEl) return;
+  var prevData = getPrevSessionData(sessId, week);
+  var custom = getCustomWeek(week);
+  var isGenerated = !!(custom && custom[sessId]);
+
+  var html = '';
+  // Source status
+  if (isGenerated) {
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:7px 10px;background:rgba(192,132,252,.1);border-radius:6px;border:1px solid rgba(192,132,252,.2)">';
+    html += '<span style="font-size:12px">&#10022;</span>';
+    html += '<span style="font-size:11px;color:var(--pur);font-family:\'DM Mono\',monospace">Esta sesion YA TIENE plan IA generado. Si regeneras sobreescribira el anterior.</span>';
+    html += '</div>';
+  } else {
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:6px;border:1px solid var(--bd)">';
+    html += '<span style="font-size:11px;color:var(--mu);font-family:\'DM Mono\',monospace">Sesion con plan base — generacion IA la personalizara con tu historial.</span>';
+    html += '</div>';
+  }
+
+  html += '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Datos que recibira Claude:</div>';
+
+  if (prevData) {
+    html += '<div style="font-size:12px;margin-bottom:3px">&#10003; Sesion anterior (Sem '+prevData.week+'): ';
+    if (prevData.pain !== null) {
+      var pc = prevData.pain<=3?'var(--gr)':prevData.pain<=6?'orange':'var(--rd)';
+      html += 'dolor <strong style="color:'+pc+'">'+prevData.pain+'/10</strong>';
+    }
+    html += '</div>';
+    if (prevData.loads.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">';
+      prevData.loads.forEach(function(l) { html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;background:rgba(255,255,255,.05);border-radius:3px;padding:1px 6px;color:var(--tx)">'+l+'</span>'; });
+      html += '</div>';
+    }
+    if (prevData.notes) html += '<div style="font-size:11px;color:var(--mu);margin-bottom:4px;font-style:italic">Nota: '+prevData.notes.slice(0,60)+'</div>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--mu);margin-bottom:4px">Sin sesiones previas de este tipo registradas. Claude usara valores de referencia.</div>';
+  }
+
+  // PR data
+  var relPRs = {A:['pr_banca','pr_militar'],B:['pr_remo','pr_domin'],C:['pr_prensa','pr_hip','pr_ext_der','pr_ext_izq'],D:[],E:[]};
+  var prLines = (relPRs[sessId]||[]).map(function(pid){
+    var p=PR_DEFS.find(function(x){return x.id===pid;});
+    var sv=state.prs[pid]||{};
+    var cv=sv.value!==undefined?sv.value:p.cu;
+    return cv!==null?p.nm+': '+cv+' '+p.un:'';
+  }).filter(Boolean);
+  if (prLines.length) {
+    html += '<div style="font-size:11px;color:var(--mu);margin-bottom:2px">PRs: '+prLines.join(' · ')+'</div>';
+  }
+
+  // Gym mods
+  var mods = Object.entries(state.exNotes||{}).filter(function(e){return e[1];});
+  if (mods.length) {
+    html += '<div style="font-size:11px;color:var(--mu)">'+mods.length+' modificacion(es) de gym incluidas</div>';
+  }
+
+  summaryEl.innerHTML = html;
+  summaryEl.style.display = 'block';
 }
 
 function refreshManualPrompt() {
@@ -1636,6 +1743,7 @@ function showAIModal() {
   var nextWeek = Math.min(4, state.currentWeek + 1);
   setManualWeek(nextWeek);
   setManualSess('A');
+  showDataSummary('A', nextWeek);
   // Update week buttons state
   [2,3,4].forEach(function(w) {
     var btn = document.getElementById('ai-btn-w'+w);
@@ -1707,7 +1815,7 @@ function generateOneSession(sessId, week) {
         Object.keys(sess.sets).forEach(function(sk) {
           if (sk.match(/_w[123]$/) && sess.sets[sk]) {
             var exId = sk.replace(/_w\d$/,'');
-            var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex||[]; }); });
+            var allEx = getAllEx();
             var ex = allEx.find(function(e){ return e.id===exId; });
             if (ex && parseFloat(sess.sets[sk])>0) loads.push(ex.nm.slice(0,15)+':'+sess.sets[sk]+'kg');
           }
@@ -1903,7 +2011,7 @@ function buildAIContext(targetWeek) {
           var key2 = e[0], val = e[1];
           if ((key2.endsWith('_w1') || key2.endsWith('_w2') || key2.endsWith('_w3')) && val && parseFloat(val) > 0) {
             var exId = key2.replace(/_w\d$/,'');
-            var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex; }); });
+            var allEx = getAllEx();
             var exDef = allEx.find(function(e){ return e.id === exId; });
             if (exDef) weights_done.push(exDef.nm.slice(0,20)+': '+val+'kg');
           }
@@ -1927,7 +2035,7 @@ function buildAIContext(targetWeek) {
   var mods = Object.entries(state.exNotes || {}).filter(function(e){ return e[1]; });
   if (mods.length) {
     mods.forEach(function(e) {
-      var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex; }); });
+      var allEx = getAllEx();
       var exDef = allEx.find(function(ex){ return ex.id === e[0]; });
       ctx.push((exDef ? exDef.nm : e[0])+': '+e[1]);
     });
@@ -2029,23 +2137,60 @@ function generateAIPlan(targetWeek) {
   });
 }
 
-function getWeekPlan(sessId, week) {
-  // Check for AI-generated custom week first
+function getAllEx() {
+  var result = [];
+  Object.keys(PLANS).forEach(function(sk) {
+    PLANS[sk].forEach(function(wk) {
+      (wk.ex||[]).forEach(function(ex) { result.push(ex); });
+    });
+  });
+  return result;
+}
+
+function getPrevSessionData(sessId, week) {
+  for (var w = week-1; w >= 1; w--) {
+    var k = getSessionKey(w, sessId);
+    var sess = state.sessions[k];
+    if (sess && sess.completed) {
+      var loads = [];
+      var allEx = getAllEx();
+      if (sess.sets) {
+        Object.keys(sess.sets).forEach(function(sk) {
+          if (sk.match(/_w[123]$/) && sess.sets[sk] && parseFloat(sess.sets[sk]) > 0) {
+            var exId = sk.replace(/_w\d$/, '');
+            var ex = allEx.filter(function(e){ return e.id === exId; })[0];
+            if (ex) loads.push(ex.nm.slice(0,14)+': '+sess.sets[sk]+'kg');
+          }
+        });
+      }
+      return { week:w, pain:sess.pain!==undefined?sess.pain:null, loads:loads.slice(0,6), notes:sess.notes||'' };
+    }
+  }
+  return null;
+}
+
+
   var custom = getCustomWeek(week);
   if (custom && custom[sessId]) {
     var sess = custom[sessId];
-    return {
+    var plan = {
       week: week,
       focus: sess.focus || 'Plan generado por IA',
-      alert: sess.alert || 'Sesion generada y adaptada a tu historial por Claude AI.',
+      alert: sess.alert || 'Sesion adaptada a tu historial por Claude AI.',
       alertType: sess.alertType || 'blue',
-      ex: sess.ex || []
+      ex: sess.ex || [],
+      source: 'ai'
     };
+    return plan;
   }
-  // Fall back to hardcoded plan
   var plans = PLANS[sessId];
-  if (!plans || !plans[week-1]) return plans ? plans[0] : null;
-  return plans[week-1];
+  if (!plans || !plans[week-1]) return plans ? Object.assign({}, plans[0], {source:'base'}) : null;
+  return Object.assign({}, plans[week-1], {source:'base'});
+}
+
+function isAISession(sessId, week) {
+  var custom = getCustomWeek(week);
+  return !!(custom && custom[sessId]);
 }
 
 function exportData() {
