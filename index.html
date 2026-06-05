@@ -257,11 +257,15 @@ body{min-height:100dvh;background:var(--bk);color:var(--tx);font-family:'DM Sans
       <div style="font-size:11px;color:var(--mu);margin-bottom:14px">La key se guarda solo en tu navegador. Nunca sale del dispositivo excepto para llamar a la API.</div>
     </div>
     <div id="ai-week-select" style="margin-bottom:14px">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Generar plan para semana</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="generateAIPlan(2)" class="btn btn-ghost" style="flex:1" id="ai-btn-w2">Semana 2</button>
-        <button onclick="generateAIPlan(3)" class="btn btn-ghost" style="flex:1" id="ai-btn-w3">Semana 3</button>
-        <button onclick="generateAIPlan(4)" class="btn btn-ghost" style="flex:1" id="ai-btn-w4">Semana 4</button>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Semana a generar</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button onclick="setAIWeek(2)" class="btn btn-ghost" style="flex:1" id="ai-btn-w2">Sem 2</button>
+        <button onclick="setAIWeek(3)" class="btn btn-ghost" style="flex:1" id="ai-btn-w3">Sem 3</button>
+        <button onclick="setAIWeek(4)" class="btn btn-ghost" style="flex:1" id="ai-btn-w4">Sem 4</button>
+      </div>
+      <div id="ai-sess-btns" style="display:none">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Generar sesion (una a la vez — mas rapido y fiable)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="ai-sess-grid"></div>
       </div>
     </div>
     <div id="ai-status" style="display:none;text-align:center;padding:20px 0">
@@ -1508,24 +1512,177 @@ function showAIModal() {
   document.getElementById('ai-status').style.display = 'none';
   document.getElementById('ai-result').style.display = 'none';
   document.getElementById('ai-error').style.display = 'none';
-  // Highlight current+next week buttons
-  var cw = state.currentWeek;
+  document.getElementById('ai-sess-btns').style.display = 'none';
+  // Week buttons
   [2,3,4].forEach(function(w) {
     var btn = document.getElementById('ai-btn-w'+w);
     if (!btn) return;
-    var isNext = w === cw+1;
-    var hasCustom = !!(getCustomWeek(w));
-    btn.className = 'btn ' + (isNext ? 'btn-ac' : hasCustom ? 'btn-gr' : 'btn-ghost');
-    btn.textContent = 'Semana ' + w + (hasCustom ? ' ✓' : isNext ? ' ← próxima' : '');
+    var custom = getCustomWeek(w);
+    var done = custom ? Object.keys(custom).length : 0;
+    btn.className = 'btn ' + (w === state.currentWeek+1 ? 'btn-ac' : 'btn-ghost');
+    btn.textContent = 'Sem '+w + (done ? ' ('+done+'/5)' : '');
   });
   document.getElementById('ai-modal').classList.add('open');
   document.getElementById('ai-modal').scrollTop = 0;
 }
 
-function closeAIModal() {
-  document.getElementById('ai-modal').classList.remove('open');
-  renderTab(currentTab);
+var aiTargetWeek = 2;
+
+function setAIWeek(w) {
+  aiTargetWeek = w;
+  [2,3,4].forEach(function(ww) {
+    var btn = document.getElementById('ai-btn-w'+ww);
+    if (btn) btn.className = 'btn ' + (ww===w ? 'btn-ac' : 'btn-ghost');
+  });
+  var grid = document.getElementById('ai-sess-grid');
+  var custom = getCustomWeek(w) || {};
+  var sessions = [
+    {id:'A', name:'EMPUJE + POTENCIA', icon:'💪'},
+    {id:'B', name:'TRACCION + POTENCIA', icon:'💪'},
+    {id:'C', name:'PIERNAS + GLUTEO', icon:'🦵'},
+    {id:'D', name:'HIIT + CORE', icon:'🔥'},
+    {id:'E', name:'CARDIO Z2', icon:'🚴'}
+  ];
+  var html = '';
+  sessions.forEach(function(s) {
+    var done = !!custom[s.id];
+    html += '<button onclick="generateOneSession(\''+s.id+'\','+w+')" class="btn '+(done?'btn-gr':'btn-ghost')+'" style="text-align:left;padding:10px 11px">';
+    html += '<div style="font-size:11px;font-weight:700">'+s.icon+' '+s.id+'</div>';
+    html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</div>';
+    html += '<div style="font-size:10px;color:'+(done?'var(--gr)':'var(--bd)')+';margin-top:2px">'+(done?'✓ generada':'pendiente')+'</div>';
+    html += '</button>';
+  });
+  grid.innerHTML = html;
+  document.getElementById('ai-sess-btns').style.display = 'block';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-error').style.display = 'none';
 }
+
+function generateOneSession(sessId, week) {
+  var apiKey = localStorage.getItem(AI_KEY_LS);
+  if (!apiKey) { showToast('Primero guarda tu API key'); return; }
+
+  document.getElementById('ai-status').style.display = 'block';
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('ai-error').style.display = 'none';
+  document.getElementById('ai-status-text').textContent = 'Generando sesion '+sessId+' semana '+week+'... (10-20s)';
+
+  var sessNames = {A:'EMPUJE + POTENCIA (pecho, hombro, cuadriceps, Push Press explosivo)',B:'TRACCION + POTENCIA (espalda, biceps, remo explosivo)',C:'PIERNAS + GLUTEO (prensa, hip thrust — rodilla adaptada, sin sentadilla bilateral, hielo al final)',D:'HIIT + CORE METABOLICO (air bike, circuitos, core intensivo)',E:'CARDIO Z2 + MOVILIDAD (45-55 min baja intensidad, movilidad articular)'};
+  var phases = {2:'VOLUMEN: +1 serie, supersets en accesorios, +2.5-5% carga en fundamentales.',3:'INTENSIDAD: 5x5 o 4x4 en fundamentales, aproximacion a PR, tecnicas de intensificacion (drop set, pause reps, EMOM).',4:'PEAK: test de PR, volumen reducido, intensidad maxima en 1-2 ejercicios principales.'};
+
+  // Build compact context
+  var ctxLines = [];
+  ctxLines.push('ATLETA: H 53a, exrugby. Condropatia grado IV + sin menisco rodilla dcha. Hernia L4-L5-S1. Peso ~'+((state.weights.length?state.weights[state.weights.length-1].v:93))+' kg.');
+  ctxLines.push('RESTRICCIONES: Sin sentadilla bilateral. Prensa max 90 grados. Sin impacto en rodilla. Remo con barra solo si no hay irradiacion lumbar.');
+
+  // Last time this session was done
+  for (var w = week-1; w >= 1; w--) {
+    var k = getSessionKey(w, sessId);
+    var sess = state.sessions[k];
+    if (sess) {
+      var loads = [];
+      if (sess.sets) {
+        Object.keys(sess.sets).forEach(function(sk) {
+          if (sk.match(/_w[123]$/) && sess.sets[sk]) {
+            var exId = sk.replace(/_w\d$/,'');
+            var allEx = Object.values(PLANS).flatMap(function(p){ return p.flatMap(function(wk){ return wk.ex||[]; }); });
+            var ex = allEx.find(function(e){ return e.id===exId; });
+            if (ex && parseFloat(sess.sets[sk])>0) loads.push(ex.nm.slice(0,15)+':'+sess.sets[sk]+'kg');
+          }
+        });
+      }
+      ctxLines.push('Sem '+w+' sesion '+sessId+': dolor '+((sess.pain!=null?sess.pain:'?'))+'/10. '+(loads.slice(0,5).join(', '))+(sess.notes?' Notas: '+sess.notes.slice(0,80):''));
+      break;
+    }
+  }
+
+  // PR data relevant to this session
+  var relPRs = {A:['pr_banca','pr_militar'],B:['pr_remo','pr_domin'],C:['pr_prensa','pr_hip','pr_ext_der','pr_ext_izq'],D:[],E:[]};
+  var prLines = (relPRs[sessId]||[]).map(function(pid){var p=PR_DEFS.find(function(x){return x.id===pid;});var sv=state.prs[pid]||{};var cv=sv.value!==undefined?sv.value:p.cu;return cv!==null?p.nm+': '+cv+' '+p.un:'';}).filter(Boolean);
+  if (prLines.length) ctxLines.push('PRs: '+prLines.join(', '));
+
+  // Gym adaptations
+  var gymNotes = Object.entries(state.exNotes||{}).filter(function(e){return e[1];}).slice(0,4);
+  if (gymNotes.length) ctxLines.push('Mods gym: '+gymNotes.map(function(e){return e[1].slice(0,40);}).join('; '));
+
+  var context = ctxLines.join('\n');
+  var phase = phases[week] || '';
+
+  var prompt = 'Genera SOLO la sesion '+sessId+' ('+sessNames[sessId]+') para la SEMANA '+week+' de un plan de fuerza+composicion.\n\nDATOS:\n'+context+'\n\nFASE '+week+': '+phase+'\n\nIMPORTANTE: Varia los ejercicios accesorios respecto a semanas anteriores. Usa tecnicas de intensificacion variadas. Sé creativo pero funcional.\n\nResponde SOLO con JSON (sin texto ni markdown):\n{"focus":"frase breve de la sesion","alert":"indicacion para el atleta","alertType":"green|blue|orange|red","ex":[{"id":"'+sessId+'1_'+week+'","nm":"Ejercicio","s":4,"hw":1,"wl":"kg","tags":["PR"],"pr":"4x8","nt":"nota tecnica breve","load":"carga sugerida"}]}\n\nMaximo 10 ejercicios. Campos obligatorios: id, nm, s, hw, wl, tags, pr, nt, load. s=0 si es calentamiento/movilidad/sin series contadas, hw=0 si no usa peso externo.';
+
+  var controller = new AbortController();
+  var timeout = setTimeout(function(){ controller.abort(); }, 40000);
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  })
+  .then(function(r) {
+    clearTimeout(timeout);
+    if (!r.ok) {
+      return r.json().then(function(e) {
+        throw new Error('HTTP '+r.status+': '+(e.error?e.error.message:JSON.stringify(e)));
+      });
+    }
+    return r.json();
+  })
+  .then(function(data) {
+    document.getElementById('ai-status').style.display = 'none';
+    var text = (data.content||[]).map(function(b){return b.type==='text'?b.text:'';}).join('');
+    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    var s = text.indexOf('{'), e2 = text.lastIndexOf('}');
+    if (s!==-1 && e2!==-1) text = text.slice(s,e2+1);
+    try {
+      var sess = JSON.parse(text);
+      if (!sess.ex || !sess.ex.length) throw new Error('Sin ejercicios en la respuesta');
+      var custom = getCustomWeek(week) || {};
+      custom[sessId] = sess;
+      saveCustomWeek(week, custom);
+      document.getElementById('ai-result-msg').innerHTML = '<strong style="color:var(--gr)">&#10003; Sesion '+sessId+' semana '+week+' generada</strong><br><span style="font-size:12px;color:var(--mu)">'+sess.focus+'</span>';
+      document.getElementById('ai-result').style.display = 'block';
+      showToast('Sesion '+sessId+' lista', true);
+      setAIWeek(week); // refresh buttons
+    } catch(e3) {
+      showAIError('Error parseando respuesta: '+e3.message+'. Intentalo de nuevo.');
+    }
+  })
+  .catch(function(err) {
+    clearTimeout(timeout);
+    document.getElementById('ai-status').style.display = 'none';
+    var msg = err.message || String(err);
+    if (msg.includes('abort') || msg.includes('AbortError')) {
+      showAIError('Tiempo de espera agotado (40s). Intentalo de nuevo o comprueba tu conexion.');
+    } else if (msg.includes('401')) {
+      showAIError('API key invalida. Borrala con el icono 🗑 e introduce una nueva.');
+    } else if (msg.includes('402') || msg.toLowerCase().includes('credit')) {
+      showAIError('Credito insuficiente. Recarga en console.anthropic.com → Billing.');
+    } else if (msg.includes('Load failed') || msg.includes('NetworkError') || msg.includes('fetch')) {
+      showAIError('Error de red. Comprueba que estas en la URL de GitHub Pages (no archivo local) y tienes conexion.');
+    } else {
+      showAIError('Error: '+msg);
+    }
+  });
+}
+
+function showAIError(msg) {
+  var el = document.getElementById('ai-error');
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+// Keep old generateAIPlan as alias for backward compat
+function generateAIPlan(w) { setAIWeek(w); }
 
 function saveApiKey() {
   var val = document.getElementById('ai-apikey-input').value.trim();
