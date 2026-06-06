@@ -2169,7 +2169,7 @@ function getPrevSessionData(sessId, week) {
   return null;
 }
 
-
+function getWeekPlan(sessId, week) {
   var custom = getCustomWeek(week);
   if (custom && custom[sessId]) {
     var sess = custom[sessId];
